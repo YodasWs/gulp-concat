@@ -13,6 +13,25 @@ module.exports = function(file, opt) {
   }
   opt = opt || {};
 
+  // Copy gulp-concat options out of unified options object
+  if (file.newLine) {
+    opt.newLine = file.newLine;
+    delete file.newLine;
+  }
+  if (file.ignore) {
+    opt.ignore = file.ignore;
+    delete file.ignore;
+  } else {
+    opt.ignore = opt.ignore || [];
+  }
+
+  // Convert opt.ignore into regex
+  if (typeof opt.ignore === 'string') {
+    opt.ignore = new RegExp(opt.ignore);
+  } else if (Array.isArray(opt.ignore)) {
+    opt.ignore = new RegExp(opt.ignore.join('|'));
+  }
+
   // to preserve existing |undefined| behaviour and to introduce |newLine: ""| for binaries
   if (typeof opt.newLine !== 'string') {
     opt.newLine = '\n';
@@ -35,6 +54,13 @@ module.exports = function(file, opt) {
   function bufferContents(file, enc, cb) {
     // ignore empty files
     if (file.isNull()) {
+      cb();
+      return;
+    }
+
+    // ignore this file?
+    if (opt.ignore && opt.ignore.test(path.relative('.', file.path))) {
+      this.push(file);
       cb();
       return;
     }
