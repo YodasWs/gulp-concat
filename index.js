@@ -22,7 +22,7 @@ module.exports = function(file, opt) {
     opt.ignore = file.ignore;
     delete file.ignore;
   } else {
-    opt.ignore = opt.ignore || [];
+    opt.ignore = opt.ignore || false;
   }
 
   // Convert opt.ignore into regex
@@ -52,15 +52,15 @@ module.exports = function(file, opt) {
   }
 
   function bufferContents(file, enc, cb) {
-    // ignore empty files
-    if (file.isNull()) {
+    // ignore this file?
+    if (opt.ignore && opt.ignore.test(path.relative('.', file.path))) {
+      this.push(file);
       cb();
       return;
     }
 
-    // ignore this file?
-    if (opt.ignore && opt.ignore.test(path.relative('.', file.path))) {
-      this.push(file);
+    // ignore empty files
+    if (file.isNull()) {
       cb();
       return;
     }
